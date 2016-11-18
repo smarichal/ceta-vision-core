@@ -32,6 +32,7 @@ public abstract class TopCodeDetector {
 	protected double minLength;
 	protected boolean probMode;
 	
+	
 	private SpotsCache cache;
 	private boolean cacheEnabled;
 	
@@ -43,9 +44,10 @@ public abstract class TopCodeDetector {
 	
 	private boolean allow_different_spot_distance;
 	private boolean interspot_distance_computed;
-	
+	private int adjust_interspot_distance_count; 
 	private static int PROBABLE_AREA_SIDE = 30;
 	
+	private static int FRAMES_ADJUTS_INTERSPOT_DISTANCE = 60; //after 60 frames we compute the interspot distance again
 	
 	/*When the topcodes are in horizontal position the orientation of the spots is -4 degrees or -0.07249829 radians*/
 	private static int HORIZONTAL_INITIAL_ROTATION_DEGREES = -4;
@@ -64,6 +66,7 @@ public abstract class TopCodeDetector {
 		this.allow_different_spot_distance=allow_different_spot_distance;
 		this.interspot_distance = DEFAULT_INTERSPOT_DISTANCE;
 		this.interspot_distance_computed=false;
+		this.adjust_interspot_distance_count = 0;
 	}
 	
 	protected void groupMarkers(){
@@ -123,7 +126,7 @@ public abstract class TopCodeDetector {
 			}
 			ret/=distances.size();
 		}else{
-			ret= DEFAULT_INTERSPOT_DISTANCE;
+			ret= this.interspot_distance; //keep the actual value. At the beginning this value is DEFAULT_INTERSPOT_DISTANCE
 		}
 		return ret;
 	}
@@ -145,29 +148,35 @@ public abstract class TopCodeDetector {
 		if(this.cacheEnabled){			
 			this.cache.insert(accumulatedSpots); //save all the spots in cache
 		}
+		this.adjust_interspot_distance_count++;
+		if(this.adjust_interspot_distance_count==FRAMES_ADJUTS_INTERSPOT_DISTANCE){
+			this.interspot_distance_computed=false;
+			this.adjust_interspot_distance_count = 0;
+		}
 	}
 
 	
 	protected Block computeBlock(int markerCode, List<TopCode> markers) {
 		Block block = null;
+		int type = -1;
 		if(BlocksMarkersMap.belongsToBlockClass(1, markerCode)){
 			block = processBlockClass1(markers);
-			block.setType(1);
-			//TODO compute area and orientation of the block
+			type = 1;
 		}else if(BlocksMarkersMap.belongsToBlockClass(2, markerCode)){
 			block = processBlockClass2(markers, block);
-			block.setType(2);
+			type = 2;
 		}else if(BlocksMarkersMap.belongsToBlockClass(3, markerCode)){
 			block = processBlockClass3(markers, block);
-			block.setType(3);
+			type = 3;
 		}else if(BlocksMarkersMap.belongsToBlockClass(4, markerCode)){
 			block = processBlockClass4(markers, block);
-			block.setType(4);
+			type = 4;
 		}else if(BlocksMarkersMap.belongsToBlockClass(5, markerCode)){
 			block = processBlockClass5(markers, block);
-			block.setType(5);
+			type = 5;
 		}
 		if(block!=null){
+			block.setType(type);
 			block.setSpots(markers);
 			block.setOrientation(computeBlockOrientation(block));
 			Point widthAndHeight = computeWidthAndHeight(block);
@@ -243,6 +252,9 @@ public abstract class TopCodeDetector {
 			 * List<TopCode> projected = getProjectedSpots(spot1);
 			 * markers.addAll(projected);
 			 */
+			if(spot1 ==null || spot2==null){
+				Logger.error("------------------------__FATAL ---------------------------");
+			}
 			Point center = getMiddlePoint(markers);
 			block = new Block(2);
 			block.setCenter(center);
@@ -801,14 +813,23 @@ public abstract class TopCodeDetector {
 	 * @param spot1
 	 * @return
 	 */
-	private TopCode getSingleMissingSpot(TopCode spot1){
+	private TopCode getSingleMissingSpot(TopCode spot){
 		TopCode spot_e = null;
-		List<TopCode> projectedSpots = getProjectedSpots(spot1);
-		if(cacheEnabled){
-			spot_e = getSpotFromCache(projectedSpots);
-		}
-		if(spot_e!=null){
-			return spot_e;
+		List<TopCode> projectedSpots = getProjectedSpots(spot);
+		TopCode spot1 = projectedSpots.get(0);
+		if(cacheEnabled){	//FIXME do a for
+			spot_e = getSpotFromCache(spot1);
+			if(spot_e!=null){
+				return spot1;
+			}else{
+				spot1 = projectedSpots.get(1);
+				spot_e = getSpotFromCache(spot1);
+				if(spot_e!=null){
+					return spot1;
+				}else{
+					return projectedSpots.get(0);
+				}
+			}
 		}else{
 			return projectedSpots.get(0);
 		}
@@ -853,7 +874,7 @@ public abstract class TopCodeDetector {
 		int size = spots.size();
 		switch (size) {
 		case 1:
-			 w = (float)Math.pow(spots.get(0).getDiameter(),2);
+			 w = spots.get(0).getDiameter();
 			 h = w;
 			break;
 		case 2:

@@ -11,10 +11,16 @@
 <!--         android:layout_height="fill_parent" -->
 <!--         android:id="@+id/color_blob_detection_activity_surface_view"> -->
 <!--      </org.opencv.android.JavaCameraView> -->
-    
+    <ImageView
+        android:id="@+id/image1"
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent"
+        android:src="@drawable/background" />
+
     <org.opencv.android.JavaCameraView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:id="@+id/color_blob_detection_activity_surface_view">
+        android:id="@+id/color_blob_detection_activity_surface_view"
+        android:visibility="visible">
      </org.opencv.android.JavaCameraView>
 </RelativeLayout>

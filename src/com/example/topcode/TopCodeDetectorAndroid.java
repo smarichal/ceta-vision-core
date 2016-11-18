@@ -37,6 +37,7 @@ public class TopCodeDetectorAndroid extends TopCodeDetector {
 		return stateMatrix.getStateMarkers();
 	}
 	
+	@Deprecated
 	public Set<TopCode> update(Bitmap bitmapImg){
 		bmp = bitmapImg;
 		this.markers = ((ScannerAndroid)this.scanner).scan(this.bmp);

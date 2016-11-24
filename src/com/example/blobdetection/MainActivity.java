@@ -42,6 +42,7 @@ import android.widget.Toast;
 
 import com.example.topcode.TopCode;
 import com.example.topcode.TopCodeDetectorAndroid;
+import com.example.utils.Logger;
 
 public class MainActivity extends ActionBarActivity implements OnTouchListener, CvCameraViewListener2  {
 
@@ -119,7 +120,6 @@ public class MainActivity extends ActionBarActivity implements OnTouchListener, 
         boolean allow_different_spot_distance = false;
         this.topCodeDetector = new TopCodeDetectorAndroid(MAX_MARKERS, true, maxDiameter,size_cache, cacheEnabeld, allow_different_spot_distance);
         mOpenCvCameraView = (CameraBridgeViewBase) findViewById(R.id.color_blob_detection_activity_surface_view);
-        
         if(front_camera){
         	mOpenCvCameraView.setCameraIndex(1);
         }
@@ -180,7 +180,7 @@ public class MainActivity extends ActionBarActivity implements OnTouchListener, 
     }
 
     public Mat onCameraFrame(CvCameraViewFrame inputFrame) {
-
+    	Logger.error("camera frame");
         if(front_camera){
         	Mat m = inputFrame.rgba();
         	Core.flip(m, mRgba, 1);

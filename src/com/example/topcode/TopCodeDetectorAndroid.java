@@ -3,7 +3,9 @@ package com.example.topcode;
 import java.util.Set;
 
 import org.opencv.android.Utils;
+import org.opencv.core.CvType;
 import org.opencv.core.Mat;
+import org.opencv.core.Point;
 
 import android.graphics.Bitmap;
 
